@@ -69,3 +69,40 @@ try{
 }catch(err){
     console.log('Error' , err)
 }
+
+    
+    /*const fs = require("fs");
+
+
+function readFile() {
+  console.log("Fim da Escrita");
+  console.log("Começo da Leitura");
+  var readerStream = fs.createReadStream("test_gfg.doc");
+  let data = "";
+  readerStream.on("data", function (chunk) {
+    data += chunk;
+    //console.log(chunk.toString());
+  });
+
+  readerStream.on("end", function () {
+    console.log("Fim da Leitura");
+  });
+}
+
+let writer = fs.createWriteStream("test_gfg.doc", {
+  flags: "w",
+});
+
+writer.on("finish", readFile);
+console.log("Comeco da Escrita");
+
+const doc = new Document();
+
+let i = 0;
+while (i < 4000000) {
+  writer.write("Cabeçalho");
+  i++;
+}
+
+writer.end();
+*/
