@@ -1,21 +1,26 @@
 import { config } from 'dotenv'
 config()
 import axios from 'axios'
-import fs  from 'fs'
+import fs, { write }  from 'fs'
 import path from 'path'
 
-
-import docx from 'docx'
-const { Document, Packer, Paragraph, TextRun } = docx;
 
 const BASE_URL = 'https://graph.facebook.com/'
 const TOKEN_ACESSO = process.env.TOKEN_ACESSO
 const ID_USUARIO = process.env.ID_USUARIO
 const DELAY_REQUEST = 1000
-const YEAR_FEED = 2013
-const FIRST_PAGE = `${BASE_URL}/${ID_USUARIO}?fields=feed.since(01/01/${YEAR_FEED}).until(02/18/${YEAR_FEED})&access_token=${TOKEN_ACESSO}`
+const YEAR_FEED_START = 2013
+const YEAR_FEED_END = 2021
+const FIRST_PAGE = `${BASE_URL}/${ID_USUARIO}?fields=feed.since(01/01/${YEAR_FEED_START}).until(12/31/${YEAR_FEED_END})&access_token=${TOKEN_ACESSO}`
 const PATH_FILE = path.resolve('tmp')
 
+
+function prepareFile(item){
+    if(item?.message){
+        const date = new Date(item.created_time)
+        return  `Data da publicação: ${date.toLocaleString()}\n${item.message.replace(/\n/g,'')}` 
+    } 
+}
 
 async function * getPaginated(page) {
     const {data : response} = await axios.get(page)
@@ -24,7 +29,8 @@ async function * getPaginated(page) {
    
     if(data.length === 0)return
   
-    yield data
+    const newData = data.map(prepareFile)
+    yield newData.join('\n\n')
     await sleep()
     yield* getPaginated(paging.next)
 }
@@ -34,75 +40,28 @@ async function sleep(){
 }
 
 try{
-    const doc = new Document();
-    
+    const writer = fs.createWriteStream(`${PATH_FILE}/${YEAR_FEED_START}_a_${YEAR_FEED_END}.txt`, {
+        flags: "w",
+    });
 
-    const b64string = await Packer.toBase64String(doc);
-    let ret
+    writer.on('error', ()=>{
+        console.log('Erro ao escrever no arquivo.')
+    })
+
+    writer.on('finish', ()=>{
+        console.log('Arquivo escrito com sucesso.')
+    })
+
+    setInterval(() => { process.stdout.write('.') }, DELAY_REQUEST).unref()
+
     const iterator = getPaginated(FIRST_PAGE)
     for await(const items of iterator){
-        
-        ret = items.map(item=>{
-            if(item?.message){
-                const date = new Date(item.created_time)
-                return  `Data da publicação: ${date.toLocaleString()}\n${item.message}` 
-            } 
-         })
-
-         doc.addSection({
-            properties: {},
-            children: [
-                new Paragraph({
-                    children: [
-                        new TextRun({
-                            text: ret.join('\n\n'),
-                            bold: true,
-                        }),
-                    ],
-                }),
-            ],
-        });
-      
-        const buffer = await Packer.toBuffer(doc) 
-        fs.writeFileSync(`${PATH_FILE}/${YEAR_FEED}.docx`, buffer);
+        writer.write(items);
     }  
+    writer.end();
 }catch(err){
     console.log('Error' , err)
 }
 
     
-    /*const fs = require("fs");
-
-
-function readFile() {
-  console.log("Fim da Escrita");
-  console.log("Começo da Leitura");
-  var readerStream = fs.createReadStream("test_gfg.doc");
-  let data = "";
-  readerStream.on("data", function (chunk) {
-    data += chunk;
-    //console.log(chunk.toString());
-  });
-
-  readerStream.on("end", function () {
-    console.log("Fim da Leitura");
-  });
-}
-
-let writer = fs.createWriteStream("test_gfg.doc", {
-  flags: "w",
-});
-
-writer.on("finish", readFile);
-console.log("Comeco da Escrita");
-
-const doc = new Document();
-
-let i = 0;
-while (i < 4000000) {
-  writer.write("Cabeçalho");
-  i++;
-}
-
-writer.end();
-*/
+   
