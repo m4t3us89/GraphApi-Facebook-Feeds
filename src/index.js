@@ -6,10 +6,10 @@ import path from 'path'
 
 
 const BASE_URL = 'https://graph.facebook.com/'
-const TOKEN_ACESSO = process.env.TOKEN_ACESSO
-const ID_USUARIO = process.env.ID_USUARIO
+const TOKEN_ACESSO = process.env.TOKEN_ACESSO_APP
+const ID_USUARIO = process.env.ID_USUARIO_APP
 const DELAY_REQUEST = 1000
-const YEAR_FEED_START = 2013
+const YEAR_FEED_START = 2021
 const YEAR_FEED_END = 2021
 const FIRST_PAGE = `${BASE_URL}/${ID_USUARIO}?fields=feed.since(01/01/${YEAR_FEED_START}).until(12/31/${YEAR_FEED_END})&access_token=${TOKEN_ACESSO}`
 const PATH_FILE = path.resolve('tmp')
