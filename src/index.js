@@ -1,17 +1,17 @@
 import { config } from 'dotenv'
 config()
 import axios from 'axios'
-import fs, { write }  from 'fs'
+import fs from 'fs'
 import path from 'path'
 
 
 const BASE_URL = 'https://graph.facebook.com/'
-const TOKEN_ACESSO = process.env.TOKEN_ACESSO_APP
-const ID_USUARIO = process.env.ID_USUARIO_APP
+const TOKEN_ACCESS = process.env.TOKEN_ACCESS_APP
+const ID_USER = process.env.ID_USER_APP
 const DELAY_REQUEST = 1000
 const YEAR_FEED_START = 2021
 const YEAR_FEED_END = 2021
-const FIRST_PAGE = `${BASE_URL}/${ID_USUARIO}?fields=feed.since(01/01/${YEAR_FEED_START}).until(12/31/${YEAR_FEED_END})&access_token=${TOKEN_ACESSO}`
+const FIRST_PAGE = `${BASE_URL}/${ID_USER}?fields=feed.since(01/01/${YEAR_FEED_START}).until(12/31/${YEAR_FEED_END})&access_token=${TOKEN_ACCESS}`
 const PATH_FILE = path.resolve('tmp')
 
 
@@ -30,8 +30,11 @@ async function * getPaginated(page) {
     if(data.length === 0)return
   
     const newData = data.map(prepareFile)
+
     yield newData.join('\n\n')
+
     await sleep()
+
     yield* getPaginated(paging.next)
 }
 
@@ -55,10 +58,13 @@ try{
     setInterval(() => { process.stdout.write('.') }, DELAY_REQUEST).unref()
 
     const iterator = getPaginated(FIRST_PAGE)
+    
     for await(const items of iterator){
         writer.write(items);
     }  
+
     writer.end();
+
 }catch(err){
     console.log('Error' , err)
 }
